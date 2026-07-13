@@ -1,5 +1,5 @@
 # Revenue Operations Health Report
-*Generated July 13, 2026 · deal-audit pipeline + CRM data*
+*Generated July 12, 2026 · deal-audit pipeline + CRM data*
 
 ---
 
