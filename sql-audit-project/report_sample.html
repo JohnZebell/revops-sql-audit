@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>RevOps Health Report — July 13, 2026</title>
+<html><head><meta charset="utf-8"><title>RevOps Health Report — July 14, 2026</title>
 <style>
   body { max-width: 780px; margin: 60px auto; padding: 0 24px;
          font: 16px/1.65 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -22,21 +22,26 @@
   li.num:before { content: ""; margin: 0; }
   li.num span { color: #0f6e56; font-weight: 700; margin-right: 8px; }
   em { color: #5f5e5a; }
+  .badge { display: inline-block; color: #fff; font-size: 11px; font-weight: 700;
+            letter-spacing: 0.6px; padding: 3px 9px; border-radius: 3px;
+            vertical-align: 1px; margin-right: 4px; }
 </style></head><body>
 <h1>Revenue Operations Health Report</h1>
-<em>Generated July 13, 2026 · deal-audit pipeline + CRM data</em>
+<em>Generated July 14, 2026 · deal-audit pipeline + CRM data</em>
 
 <hr>
 
 <h2>Executive summary</h2>
 
 <li><strong>3 critical</strong> — data is actively wrong or money is at risk.</li>
-<li><strong>4 warnings</strong> — need a human decision.</li>
+<li><strong>6 warnings</strong> — need a human decision.</li>
 <li><strong>2 passing</strong> — guardrails held (an empty result is a passing test).</li>
+
 
 <strong>The three things that need attention, in order:</strong>
 
-<li class="num"><span>1.</span> <strong>Pipeline freshness</strong> — <strong>No audit has run in 14 days.</strong> The pipeline may have stopped.</li>
+
+<li class="num"><span>1.</span> <strong>Pipeline freshness</strong> — <strong>No audit has run in 15 days.</strong> The pipeline may have stopped.</li>
 <li class="num"><span>2.</span> <strong>Duplicate leads</strong> — The lead count is inflated by <strong>30 duplicate records</strong> (6.0% of the list). The real number is <strong>469</strong>, not 499.</li>
 <li class="num"><span>3.</span> <strong>Unassigned deals</strong> — <strong>17 deals have no rep assigned</strong>, hiding <strong>$1,504,354</strong> from every rep-level report.</li>
 
@@ -48,7 +53,7 @@
 
 <h3>Pipeline freshness</h3>
 
-<p>🔴 <strong>CRITICAL</strong> — <strong>No audit has run in 14 days.</strong> The pipeline may have stopped.</p>
+<span class="badge" style="background:#a32d2d">CRITICAL</span> — <strong>No audit has run in 15 days.</strong> The pipeline may have stopped.
 
 <p>A table can pass every other check on this page and still be wrong, because it&#x27;s <em>stale</em>. Clean, valid, and out of date.</p>
 
@@ -58,7 +63,7 @@
 
 <h3>Idempotency guardrail</h3>
 
-<p>🟢 PASS — <strong>No duplicate audits across 304 runs.</strong> A retry or double-click cannot create a second record or a second API charge.</p>
+<span class="badge" style="background:#0f6e56">PASS</span> — <strong>No duplicate audits across 304 runs.</strong> A retry or double-click cannot create a second record or a second API charge.
 
 <strong>An empty result here is a passing test.</strong> The pipeline builds a key (<code>audit:{deal_id}:{date}</code>) before calling the model, and skips the run if that key already exists.
 
@@ -68,14 +73,14 @@
 
 <h3>Duplicate leads</h3>
 
-<p>🔴 <strong>CRITICAL</strong> — The lead count is inflated by <strong>30 duplicate records</strong> (6.0% of the list). The real number is <strong>469</strong>, not 499.</p>
+<span class="badge" style="background:#a32d2d">CRITICAL</span> — The lead count is inflated by <strong>30 duplicate records</strong> (6.0% of the list). The real number is <strong>469</strong>, not 499.
 
 <p>A naive <code>GROUP BY email</code> finds <strong>0</strong> duplicates — it looks clean. But <code>rachel@northwind.com</code> and <code>Rachel@Northwind.com</code> are the same human and different strings, so they land in separate buckets. Normalizing with <code>LOWER(TRIM(email))</code> surfaces all <strong>30</strong>.</p>
 
 <strong>Business impact:</strong> every one of these people gets contacted twice. Any per-lead cost metric is overstated. Conversion rate is understated, because the denominator is too big.
 
 <table>
-<tr><th>normalized_email</th><th>copies</th></tr>
+<tr><th>Normalized Email</th><th>Copies</th></tr>
 <tr><td>bree.blake@outlook.com</td><td>2</td></tr>
 <tr><td>bree.reeves@outlook.com</td><td>2</td></tr>
 <tr><td>cal.obi@outlook.com</td><td>2</td></tr>
@@ -88,7 +93,7 @@
 
 <h3>Unassigned deals</h3>
 
-<p>🔴 <strong>CRITICAL</strong> — <strong>17 deals have no rep assigned</strong>, hiding <strong>$1,504,354</strong> from every rep-level report.</p>
+<span class="badge" style="background:#a32d2d">CRITICAL</span> — <strong>17 deals have no rep assigned</strong>, hiding <strong>$1,504,354</strong> from every rep-level report.
 
 <p>Total pipeline is <strong>$32,376,074</strong>. Sum it by rep and you get <strong>$30,871,720</strong>.</p>
 
@@ -100,7 +105,7 @@
 
 <h3>Stage-history coverage</h3>
 
-<p>🟡 <strong>WARNING</strong> — <strong>22 deals have no stage history.</strong> Any velocity analysis using an <code>INNER JOIN</code> silently excludes them — 5.5% of the pipeline.</p>
+<span class="badge" style="background:#854f0b">WARNING</span> — <strong>22 deals have no stage history.</strong> Any velocity analysis using an <code>INNER JOIN</code> silently excludes them — 5.5% of the pipeline.
 
 <code>INNER JOIN</code> returns <strong>378</strong> deals. <code>LEFT JOIN</code> returns <strong>400</strong>.
 
@@ -112,7 +117,7 @@
 
 <h3>Tool adoption — the coverage gap</h3>
 
-<p>🟡 <strong>WARNING</strong> — <strong>34 of 158 open deals (21.5%) have never been audited.</strong> That&#x27;s <strong>$3,181,542</strong> of open pipeline the tool has never looked at.</p>
+<span class="badge" style="background:#854f0b">WARNING</span> — <strong>34 of 158 open deals (21.5%) have never been audited.</strong> That&#x27;s <strong>$3,181,542</strong> of open pipeline the tool has never looked at.
 
 <strong>This is the failure mode no error log will ever show you.</strong> A tool with a 100% success rate that only runs on three-quarters of deals is not working — it is <em>unused</em>.
 
@@ -121,26 +126,26 @@
 <strong>Largest uncovered deals:</strong>
 
 <table>
-<tr><th>id</th><th>name</th><th>amount</th><th>stage</th></tr>
-<tr><td>334</td><td>Cascade - Platform</td><td>224523.14</td><td>Negotiation</td></tr>
-<tr><td>243</td><td>Cobalt - Expansion</td><td>213224.30</td><td>Prospecting</td></tr>
-<tr><td>124</td><td>Havenport - Pilot</td><td>198366.25</td><td>Negotiation</td></tr>
-<tr><td>135</td><td>Lakeshore - Platform</td><td>188244.06</td><td>Negotiation</td></tr>
-<tr><td>48</td><td>Vantage - Expansion</td><td>181861.34</td><td>Negotiation</td></tr>
+<tr><th>ID</th><th>Name</th><th>Amount</th><th>Stage</th></tr>
+<tr><td>334</td><td>Cascade - Platform</td><td>$224,523</td><td>Negotiation</td></tr>
+<tr><td>243</td><td>Cobalt - Expansion</td><td>$213,224</td><td>Prospecting</td></tr>
+<tr><td>124</td><td>Havenport - Pilot</td><td>$198,366</td><td>Negotiation</td></tr>
+<tr><td>135</td><td>Lakeshore - Platform</td><td>$188,244</td><td>Negotiation</td></tr>
+<tr><td>48</td><td>Vantage - Expansion</td><td>$181,861</td><td>Negotiation</td></tr>
 </table>
 
 <strong>What to do:</strong> Two possibilities and they need different fixes. If reps <em>don&#x27;t know</em> the tool exists, that&#x27;s enablement. If they know and aren&#x27;t using it, the output isn&#x27;t worth the click — and that&#x27;s a product problem. Ask five reps before you assume which.
 
 <h3>Model self-consistency</h3>
 
-<p>🟡 <strong>WARNING</strong> — <strong>8 runs scored a deal 7+ for risk and then listed ZERO red flags</strong> (2.7% of successful runs).</p>
+<span class="badge" style="background:#854f0b">WARNING</span> — <strong>8 runs scored a deal 7+ for risk and then listed ZERO red flags</strong> (2.7% of successful runs).
 
 <p>The model asserted danger and produced no evidence for it. That is not an insight — it&#x27;s a confident number with nothing behind it.</p>
 
 <strong>You cannot catch this by looking at either column alone.</strong> A risk score of 9 looks fine. Zero red flags looks fine. Only the <em>combination</em> is broken.
 
 <table>
-<tr><th>deal<em>id</th><th>company</th><th>risk</em>score</th><th>red<em>flag</em>count</th><th>note_count</th></tr>
+<tr><th>Deal ID</th><th>Company</th><th>Risk Score</th><th>Red Flag Count</th><th>Note Count</th></tr>
 <tr><td>227</td><td>Northwind Freight</td><td>10</td><td>0</td><td>7</td></tr>
 <tr><td>44</td><td>Kingsley Industries</td><td>9</td><td>0</td><td>3</td></tr>
 <tr><td>52</td><td>Winslow Solutions</td><td>9</td><td>0</td><td>3</td></tr>
@@ -161,7 +166,7 @@
 
 <h3>Does the risk score predict anything?</h3>
 
-<p>🟢 PASS — <strong>Yes.</strong> Low-risk deals win at <strong>72.3%</strong>. High-risk deals win at <strong>33.3%</strong>. A <strong>39.0 point</strong> spread.</p>
+<span class="badge" style="background:#0f6e56">PASS</span> — <strong>Yes.</strong> Low-risk deals win at <strong>72.3%</strong>. High-risk deals win at <strong>33.3%</strong>. A <strong>39.0 point</strong> spread.
 
 <p>The score has real signal. Win rate falls monotonically as risk rises.</p>
 
@@ -172,58 +177,88 @@
 <strong>The caveat that matters:</strong> this query cannot tell you whether a rep saw a high score and <em>saved</em> the deal. A perfect early-warning system that everyone acts on would show <strong>no correlation at all</strong>, because every flagged deal got rescued. The tool working and the tool failing look identical in this data.
 
 <table>
-<tr><th>risk<em>band</th><th>closed</em>deals</th><th>won</th><th>win<em>rate</em>pct</th></tr>
-<tr><td>Low (1-3)</td><td>47</td><td>34</td><td>72.30</td></tr>
-<tr><td>Medium (4-6)</td><td>65</td><td>32</td><td>49.20</td></tr>
-<tr><td>High (7-10)</td><td>78</td><td>26</td><td>33.30</td></tr>
+<tr><th>Risk Band</th><th>Closed Deals</th><th>Won</th><th>Win Rate %</th></tr>
+<tr><td>Low (1-3)</td><td>47</td><td>34</td><td>72.3%</td></tr>
+<tr><td>Medium (4-6)</td><td>65</td><td>32</td><td>49.2%</td></tr>
+<tr><td>High (7-10)</td><td>78</td><td>26</td><td>33.3%</td></tr>
 </table>
 
 <strong>What to do:</strong> Keep the feature. Cross-reference against rep activity — if flagged deals get <em>more</em> touches afterward, the tool is changing behavior and the real impact is larger than this table shows.
 
 <h3>Where deals stall</h3>
 
-<p>🔵 INFO — <strong>Prospecting</strong> is the slowest stage — deals sit there an average of <strong>31 days</strong> (worst case: 70).</p>
+<span class="badge" style="background:#854f0b">WARNING</span> — <strong>Negotiation</strong> is the slowest stage — deals sit there an average of <strong>173 days</strong> (worst case: 503).
 
 <p>The CRM shows you a deal&#x27;s stage <em>today</em> and overwrote yesterday. This is reconstructed from stage history, which is the only place the movie exists.</p>
 
-<strong>6 open deals have not moved in 45+ days.</strong> Those are the calls to make this week.
+<strong>Watch the trap in this number.</strong> The usual way to compute stage velocity only measures deals that ENTERED a stage and LEFT it. Deals still sitting in a stage get dropped — and those are exactly the slow ones.
+
+<p>For <strong>Negotiation</strong>, the naive calculation says <strong>23 days</strong>. Counting the 132 deals still stuck there, the real average is <strong>173 days</strong>.</p>
+
+<strong>The fast deals closed and got counted. The slow ones are still open and got ignored.</strong> Averaging only the survivors makes your worst stage look like your best one. Every stage number here uses <code>COALESCE(exited<em>at, CURRENT</em>DATE)</code> so open deals still count.
+
+<strong>49 open deals have gone quiet for 46-180 days</strong> — listed in the next section. Those are the calls to make this week.
+
+<strong>Separately: 79 open deals have not moved in over six months, worth $6,987,856.</strong> Those are not stalled — they are <strong>dead</strong>, and they are inflating every forecast that sums open pipeline. <strong>Close them lost.</strong> A forecast built on zombie deals is worse than no forecast, because people believe it.
 
 <table>
-<tr><th>id</th><th>name</th><th>amount</th><th>stage</th><th>days<em>stuck</th><th>risk</em>score</th></tr>
-<tr><td>138</td><td>Northwind - Renewal</td><td>249071.69</td><td>Negotiation</td><td>429</td><td>2</td></tr>
-<tr><td>15</td><td>Pinehurst - Suite</td><td>244640.03</td><td>Negotiation</td><td>108</td><td>7</td></tr>
-<tr><td>330</td><td>Ridgeway - Suite</td><td>240235.05</td><td>Negotiation</td><td>409</td><td>7</td></tr>
-<tr><td>224</td><td>Halcyon - Expansion</td><td>224635.67</td><td>Negotiation</td><td>80</td><td>8</td></tr>
-<tr><td>334</td><td>Cascade - Platform</td><td>224523.14</td><td>Negotiation</td><td>63</td><td>—</td></tr>
-<tr><td>156</td><td>Brightline - Expansion</td><td>222112.84</td><td>Negotiation</td><td>238</td><td>4</td></tr>
+<tr><th>Stage</th><th>Deals Entered</th><th>Still Sitting</th><th>Avg Days</th><th>Worst Days</th></tr>
+<tr><td>Negotiation</td><td>182</td><td>132</td><td>173.30</td><td>503</td></tr>
+<tr><td>Prospecting</td><td>378</td><td>3</td><td>31.60</td><td>70</td></tr>
+<tr><td>Discovery</td><td>337</td><td>4</td><td>27.80</td><td>68</td></tr>
+<tr><td>Demo</td><td>305</td><td>8</td><td>27.10</td><td>74</td></tr>
 </table>
 
-<strong>What to do:</strong> Ask why Prospecting takes 31 days. It&#x27;s usually one of three things: waiting on a stakeholder who was never introduced, waiting on procurement nobody scoped, or the rep is avoiding a hard conversation.
+<strong>What to do:</strong> Ask why Negotiation takes 173 days. It&#x27;s usually one of three things: waiting on a stakeholder who was never introduced, waiting on procurement nobody scoped, or the rep is avoiding a hard conversation. And purge the zombie deals before the next forecast.
+
+<h3>Deals to call this week</h3>
+
+<span class="badge" style="background:#854f0b">WARNING</span> — <strong>8 open deals</strong> worth <strong>$1,635,405</strong> have gone quiet for 46-180 days. Old enough to be a problem, recent enough to save.
+
+<p>These are the actionable ones — not the zombies above. Someone should touch every row in this table before Friday.</p>
+
+<strong>3 of them were never audited</strong>, so there is no risk score to prioritize by. That&#x27;s the coverage gap costing you, right here, in a specific list.
+
+<table>
+<tr><th>ID</th><th>Name</th><th>Amount</th><th>Stage</th><th>Days Stuck</th><th>Risk Score</th></tr>
+<tr><td>15</td><td>Pinehurst - Suite</td><td>$244,640</td><td>Negotiation</td><td>109</td><td>7</td></tr>
+<tr><td>224</td><td>Halcyon - Expansion</td><td>$224,636</td><td>Negotiation</td><td>81</td><td>8</td></tr>
+<tr><td>334</td><td>Cascade - Platform</td><td>$224,523</td><td>Negotiation</td><td>64</td><td>—</td></tr>
+<tr><td>243</td><td>Cobalt - Expansion</td><td>$213,224</td><td>Negotiation</td><td>89</td><td>—</td></tr>
+<tr><td>226</td><td>Ridgeway - Core</td><td>$204,170</td><td>Negotiation</td><td>150</td><td>1</td></tr>
+<tr><td>48</td><td>Vantage - Expansion</td><td>$181,861</td><td>Negotiation</td><td>147</td><td>—</td></tr>
+<tr><td>121</td><td>Lakeshore - Expansion</td><td>$174,880</td><td>Negotiation</td><td>163</td><td>1</td></tr>
+<tr><td>296</td><td>Thornbury - Pilot</td><td>$167,471</td><td>Discovery</td><td>48</td><td>8</td></tr>
+</table>
+
+<strong>What to do:</strong> Assign each one an owner and a next step. If a deal can&#x27;t get a next step, close it.
 
 <h3>Cost trend</h3>
 
-<p>🔵 INFO — Average cost per run rose <strong>+40%</strong> — but <strong>cost per note is -49.1%</strong>, essentially flat. <strong>The model didn&#x27;t get more expensive. The inputs got bigger.</strong></p>
+<span class="badge" style="background:#185fa5">INFO</span> — Average cost per run rose <strong>+40%</strong> — but <strong>cost per note actually FELL 49%</strong>. <strong>The model didn&#x27;t get more expensive. The inputs got bigger.</strong>
 
 <p>Reps logged more calls over the period (avg notes went from 3.3 to 8.3), so each audit had more text to read.</p>
 
+<strong>Per unit of work, the pipeline actually got CHEAPER.</strong> Total spend is up because usage is up — which is the outcome you want. Reading only the headline number, you would conclude the opposite.
+
 <strong>Same rising number, two completely different stories.</strong> One is &#x27;our vendor raised prices.&#x27; The other is &#x27;the tool got more popular.&#x27; They demand opposite responses, and you cannot tell them apart without the control variable.
 
-<p>Total spend to date: <strong>$2.20</strong>.</p>
+<strong>$0.0086 per audit.</strong> Scaled up, that is <strong>~$9 to audit 1,000 deals</strong> — the cost is not the constraint here, and it will not become one. (294 runs logged to date.)
 
 <table>
-<tr><th>month</th><th>runs</th><th>avg<em>cost</th><th>avg</em>notes</th><th>cost<em>per</em>note</th></tr>
-<tr><td>2025-01-01 00:00:00</td><td>3</td><td>0.01</td><td>3.33</td><td>0.00</td></tr>
-<tr><td>2025-02-01 00:00:00</td><td>14</td><td>0.01</td><td>3.07</td><td>0.00</td></tr>
-<tr><td>2025-03-01 00:00:00</td><td>13</td><td>0.01</td><td>2.85</td><td>0.00</td></tr>
-<tr><td>2025-04-01 00:00:00</td><td>13</td><td>0.01</td><td>3.23</td><td>0.00</td></tr>
-<tr><td>2025-05-01 00:00:00</td><td>18</td><td>0.01</td><td>4.06</td><td>0.00</td></tr>
-<tr><td>2025-06-01 00:00:00</td><td>17</td><td>0.01</td><td>4.53</td><td>0.00</td></tr>
-<tr><td>2025-07-01 00:00:00</td><td>27</td><td>0.01</td><td>4.07</td><td>0.00</td></tr>
-<tr><td>2025-08-01 00:00:00</td><td>19</td><td>0.01</td><td>4.68</td><td>0.00</td></tr>
-<tr><td>2025-09-01 00:00:00</td><td>11</td><td>0.01</td><td>5.36</td><td>0.00</td></tr>
-<tr><td>2025-10-01 00:00:00</td><td>24</td><td>0.01</td><td>5.71</td><td>0.00</td></tr>
-<tr><td>2025-11-01 00:00:00</td><td>14</td><td>0.01</td><td>6.07</td><td>0.00</td></tr>
-<tr><td>2025-12-01 00:00:00</td><td>17</td><td>0.01</td><td>6.18</td><td>0.00</td></tr>
+<tr><th>Month</th><th>Runs</th><th>Avg Cost</th><th>Avg Notes</th><th>Cost Per Note</th></tr>
+<tr><td>2025-01-01</td><td>3</td><td>$0.00611</td><td>3.33</td><td>$0.00206</td></tr>
+<tr><td>2025-02-01</td><td>14</td><td>$0.00609</td><td>3.07</td><td>$0.0023</td></tr>
+<tr><td>2025-03-01</td><td>13</td><td>$0.00571</td><td>2.85</td><td>$0.00212</td></tr>
+<tr><td>2025-04-01</td><td>13</td><td>$0.00585</td><td>3.23</td><td>$0.00221</td></tr>
+<tr><td>2025-05-01</td><td>18</td><td>$0.00651</td><td>4.06</td><td>$0.00177</td></tr>
+<tr><td>2025-06-01</td><td>17</td><td>$0.00677</td><td>4.53</td><td>$0.0016</td></tr>
+<tr><td>2025-07-01</td><td>27</td><td>$0.00644</td><td>4.07</td><td>$0.00185</td></tr>
+<tr><td>2025-08-01</td><td>19</td><td>$0.00697</td><td>4.68</td><td>$0.00153</td></tr>
+<tr><td>2025-09-01</td><td>11</td><td>$0.00722</td><td>5.36</td><td>$0.00141</td></tr>
+<tr><td>2025-10-01</td><td>24</td><td>$0.00728</td><td>5.71</td><td>$0.00135</td></tr>
+<tr><td>2025-11-01</td><td>14</td><td>$0.00734</td><td>6.07</td><td>$0.00124</td></tr>
+<tr><td>2025-12-01</td><td>17</td><td>$0.00738</td><td>6.18</td><td>$0.00123</td></tr>
 </table>
 
 <em>…and 6 more rows.</em>
@@ -232,14 +267,14 @@
 
 <h3>Unmatched leads</h3>
 
-<p>🟡 <strong>WARNING</strong> — <strong>217 unassigned leads could be matched to an existing company account today</strong>, for free, just by matching the email domain.</p>
+<span class="badge" style="background:#854f0b">WARNING</span> — <strong>217 unassigned leads could be matched to an existing company account today</strong>, for free, just by matching the email domain.
 
 <p>Nobody has done it. These are people from companies already in the CRM, sitting unclaimed.</p>
 
 <p>The other buckets are the honest part: personal-email leads are <em>correctly</em> unmatchable. But the last bucket includes leads at companies that <strong>are in the database</strong> — the join fails anyway, because that company&#x27;s <code>domain</code> field is empty. <strong>You&#x27;d swear the company was missing. It isn&#x27;t. The field is.</strong></p>
 
 <table>
-<tr><th>category</th><th>leads</th></tr>
+<tr><th>Category</th><th>Leads</th></tr>
 <tr><td>MATCHABLE NOW — money on the floor</td><td>217</td></tr>
 <tr><td>Personal email (correctly unmatchable)</td><td>123</td></tr>
 <tr><td>Typo, or our company record has a NULL domain</td><td>66</td></tr>
@@ -253,11 +288,10 @@
 
 <p>Every finding above is a query, and every query is in <code>checks.sql</code> or <code>analysis.sql</code>.</p>
 
-<p>The interpretation is the point. A table of numbers is raw material — this report</p>
-<p>says what the numbers <em>mean</em> and what to do about them. A correct query nobody reads</p>
-<p>is worth zero.</p>
+<p>The interpretation is the point. A table of numbers is raw material — this report says what</p>
+<p>the numbers <em>mean</em> and what to do about them. <strong>A correct query nobody reads is worth zero.</strong></p>
 
-<strong>Every AI feature I build ships with a query that could prove it useless.</strong>
-<p>The efficacy check above is that query.</p>
+<strong>Every AI feature I build ships with a query that could prove it useless.</strong> The efficacy
+<p>check above is that query.</p>
 
 </body></html>

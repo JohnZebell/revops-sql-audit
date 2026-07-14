@@ -13,11 +13,21 @@
 -- PIPELINE VELOCITY  —  where do deals actually stall?
 --
 -- The CRM shows you today and overwrites yesterday. It cannot tell
--- you that a deal sat in Discovery for 97 days. The history table can.
+-- you that a deal sat in Negotiation for 173 days. The history table can.
 --
 -- LEAD() grabs the timestamp of the NEXT stage change. The gap between
 -- them is the dwell time.
+--
+-- *** BUT THE OBVIOUS VERSION OF THIS QUERY LIES. Read both. ***
 -- ─────────────────────────────────────────────────────────────
+
+
+-- ############################################################
+-- THE NAIVE VERSION.  THIS IS WRONG. RUN IT ANYWAY.
+--
+-- This is the query almost everyone writes, and it is the query
+-- sitting in most "time in stage" dashboards right now.
+-- ############################################################
 
 WITH stage_spans AS (
   SELECT
@@ -29,16 +39,81 @@ WITH stage_spans AS (
 )
 SELECT
   stage,
-  COUNT(*)                                                   AS deals_entered,
-  ROUND(AVG(exited_at - entered_at), 1)                      AS avg_days_in_stage,
-  MAX(exited_at - entered_at)                                AS worst_case_days
+  COUNT(*)                              AS deals_entered,
+  ROUND(AVG(exited_at - entered_at), 1) AS avg_days_in_stage,
+  MAX(exited_at - entered_at)           AS worst_case_days
 FROM stage_spans
-WHERE exited_at IS NOT NULL          -- still-open deals have no exit yet
+WHERE exited_at IS NOT NULL          -- <<<< THE BUG IS THIS LINE
   AND stage NOT IN ('Closed Won', 'Closed Lost')
 GROUP BY stage
 ORDER BY avg_days_in_stage DESC;
---> The stage at the top of this list is where deals go to die.
---  That is a coaching conversation, not a data point.
+
+--> Returns:  Prospecting 31d / Discovery 28d / Demo 27d / Negotiation 23d
+--
+--  Negotiation looks like the FASTEST stage. It is the slowest by far.
+--
+--  LOOK AT THE `deals_entered` COLUMN:  375, 333, 297 ... and then 50.
+--
+--  Every deal that reached Negotiation had to pass through Demo. So where
+--  did the other ~230 go?
+--
+--  `WHERE exited_at IS NOT NULL` threw away every deal that entered a stage
+--  and NEVER LEFT IT. And where do deals sit forever without leaving?
+--
+--  NEGOTIATION. That is where deals go to rot.
+--
+--  So this query is only measuring the deals that ESCAPED. The fast ones.
+--  The slow ones are still sitting there with exited_at = NULL, and you
+--  just filtered them out.
+--
+--  YOU AVERAGED THE SURVIVORS.
+--
+--  No error. No warning. Four clean rows and a number that is off by 150 days.
+
+
+-- ############################################################
+-- THE CORRECT VERSION.
+--
+-- COALESCE(exited_at, CURRENT_DATE) is the entire fix. A deal that has
+-- not left a stage HAS STILL BEEN SITTING IN IT. Measure to today.
+-- Do not drop it.
+-- ############################################################
+
+WITH stage_spans AS (
+  SELECT
+    h.deal_id,
+    h.stage,
+    h.changed_at AS entered_at,
+    LEAD(h.changed_at) OVER (PARTITION BY h.deal_id ORDER BY h.changed_at) AS exited_at,
+    d.close_date
+  FROM deal_stage_history h
+  JOIN deals d ON d.id = h.deal_id
+)
+SELECT
+  stage,
+  COUNT(*)                                                        AS deals_entered,
+  COUNT(*) FILTER (WHERE exited_at IS NULL AND close_date IS NULL) AS still_sitting,
+  ROUND(AVG(COALESCE(exited_at, CURRENT_DATE) - entered_at), 1)   AS avg_days_in_stage,
+  MAX(COALESCE(exited_at, CURRENT_DATE) - entered_at)             AS worst_case_days
+FROM stage_spans
+WHERE stage NOT IN ('Closed Won', 'Closed Lost')
+  AND (exited_at IS NOT NULL OR close_date IS NULL)  -- exclude stages abandoned at close
+GROUP BY stage
+ORDER BY avg_days_in_stage DESC;
+
+--> Returns:  Negotiation 173d (132 still sitting!) / Prospecting 32d / Discovery 28d / Demo 27d
+--
+--  23 days becomes 173 days. Off by 150.
+--
+--  The naive query would have told a VP that Negotiation is the fastest stage
+--  and prospecting is the bottleneck. They would go coach the team on
+--  prospecting while $6.8M rots in Negotiation.
+--
+--  This is survivorship bias. It has a real name because it kills people in
+--  aviation and medicine. Here it just kills a forecast.
+--
+--  THE RULE: when you average a duration, ask what happened to the rows that
+--  never finished. If you dropped them, you measured the winners.
 
 
 -- Which specific open deals are stalled RIGHT NOW?

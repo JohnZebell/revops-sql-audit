@@ -56,7 +56,7 @@ It opens like this:
 > ## Executive summary
 >
 > - **3 critical** — data is actively wrong or money is at risk.
-> - **4 warnings** — need a human decision.
+> - **6 warnings** — need a human decision.
 > - **2 passing** — guardrails held (an empty result is a passing test).
 >
 > **The three things that need attention, in order:**
@@ -117,9 +117,13 @@ Run these **before** you analyze anything. Do not trust data you have not audite
 
 ## analysis.sql — the questions that decide things
 
-**Pipeline velocity.** Where do deals actually stall? The CRM shows you today and overwrites yesterday; it cannot tell you a deal sat in Discovery for 68 days. `LEAD()` over the stage history can.
+**Pipeline velocity — and the query that lies.** The obvious way to compute time-in-stage only counts deals that *entered a stage and left it*. Deals still sitting there get dropped — and those are exactly the slow ones.
 
-**Cost drift.** Average cost per run rises over the year. Looks alarming. But `cost_per_note` is *flat* — the model didn't get expensive, the inputs got bigger. Same rising number, two completely different stories. The control variable is the whole point.
+The naive query says Negotiation takes **23 days**. Counting the **132 deals still stuck there**, the real number is **173 days**.
+
+**The fast deals closed and got counted. The slow ones are still open and got ignored.** Averaging only the survivors makes your worst stage look like your best one. `analysis.sql` has both versions side by side, so you can run them and watch the number move 150 days.
+
+**Cost drift.** Average cost per run rose **40%** over the year. Looks alarming. But cost *per note* actually **fell 49%** — the model didn't get expensive, the inputs got bigger. Reps logged more calls, so each audit had more to read. **Same rising number, two completely different stories, and they need opposite responses.** The control variable is the whole point.
 
 **Model drift.** Same trap, different column. If average risk climbs while note count also climbs, the data changed and the model is fine. If risk climbs and notes stay flat, **the model's judgment moved and nobody touched it.**
 

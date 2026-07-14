@@ -1,17 +1,19 @@
 # Revenue Operations Health Report
-*Generated July 12, 2026 · deal-audit pipeline + CRM data*
+*Generated July 14, 2026 · deal-audit pipeline + CRM data*
 
 ---
 
 ## Executive summary
 
 - **3 critical** — data is actively wrong or money is at risk.
-- **4 warnings** — need a human decision.
+- **6 warnings** — need a human decision.
 - **2 passing** — guardrails held (an empty result is a passing test).
+
 
 **The three things that need attention, in order:**
 
-1. **Pipeline freshness** — **No audit has run in 14 days.** The pipeline may have stopped.
+
+1. **Pipeline freshness** — **No audit has run in 15 days.** The pipeline may have stopped.
 2. **Duplicate leads** — The lead count is inflated by **30 duplicate records** (6.0% of the list). The real number is **469**, not 499.
 3. **Unassigned deals** — **17 deals have no rep assigned**, hiding **$1,504,354** from every rep-level report.
 
@@ -23,7 +25,7 @@ _These run before any analysis. Do not trust numbers from data you have not audi
 
 ### Pipeline freshness
 
-🔴 **CRITICAL** — **No audit has run in 14 days.** The pipeline may have stopped.
+**[ CRITICAL ]** — **No audit has run in 15 days.** The pipeline may have stopped.
 
 A table can pass every other check on this page and still be wrong, because it's *stale*. Clean, valid, and out of date.
 
@@ -33,7 +35,7 @@ A table can pass every other check on this page and still be wrong, because it's
 
 ### Idempotency guardrail
 
-🟢 PASS — **No duplicate audits across 304 runs.** A retry or double-click cannot create a second record or a second API charge.
+**[ PASS ]** — **No duplicate audits across 304 runs.** A retry or double-click cannot create a second record or a second API charge.
 
 **An empty result here is a passing test.** The pipeline builds a key (`audit:{deal_id}:{date}`) before calling the model, and skips the run if that key already exists.
 
@@ -43,13 +45,13 @@ This query is the *proof* the guardrail held — not a claim that it did.
 
 ### Duplicate leads
 
-🔴 **CRITICAL** — The lead count is inflated by **30 duplicate records** (6.0% of the list). The real number is **469**, not 499.
+**[ CRITICAL ]** — The lead count is inflated by **30 duplicate records** (6.0% of the list). The real number is **469**, not 499.
 
 A naive `GROUP BY email` finds **0** duplicates — it looks clean. But `rachel@northwind.com` and `Rachel@Northwind.com` are the same human and different strings, so they land in separate buckets. Normalizing with `LOWER(TRIM(email))` surfaces all **30**.
 
 **Business impact:** every one of these people gets contacted twice. Any per-lead cost metric is overstated. Conversion rate is understated, because the denominator is too big.
 
-| normalized_email | copies |
+| Normalized Email | Copies |
 |---|---|
 | bree.blake@outlook.com | 2 |
 | bree.reeves@outlook.com | 2 |
@@ -62,7 +64,7 @@ A naive `GROUP BY email` finds **0** duplicates — it looks clean. But `rachel@
 
 ### Unassigned deals
 
-🔴 **CRITICAL** — **17 deals have no rep assigned**, hiding **$1,504,354** from every rep-level report.
+**[ CRITICAL ]** — **17 deals have no rep assigned**, hiding **$1,504,354** from every rep-level report.
 
 Total pipeline is **$32,376,074**. Sum it by rep and you get **$30,871,720**.
 
@@ -74,7 +76,7 @@ The difference isn't a rounding error. A `JOIN` to the reps table drops any deal
 
 ### Stage-history coverage
 
-🟡 **WARNING** — **22 deals have no stage history.** Any velocity analysis using an `INNER JOIN` silently excludes them — 5.5% of the pipeline.
+**[ WARNING ]** — **22 deals have no stage history.** Any velocity analysis using an `INNER JOIN` silently excludes them — 5.5% of the pipeline.
 
 `INNER JOIN` returns **378** deals. `LEFT JOIN` returns **400**.
 
@@ -86,7 +88,7 @@ Same tables. Same key. One keyword different. **No error either way.**
 
 ### Tool adoption — the coverage gap
 
-🟡 **WARNING** — **34 of 158 open deals (21.5%) have never been audited.** That's **$3,181,542** of open pipeline the tool has never looked at.
+**[ WARNING ]** — **34 of 158 open deals (21.5%) have never been audited.** That's **$3,181,542** of open pipeline the tool has never looked at.
 
 **This is the failure mode no error log will ever show you.** A tool with a 100% success rate that only runs on three-quarters of deals is not working — it is *unused*.
 
@@ -94,25 +96,25 @@ The runs that never happened don't log anything. They are invisible unless you g
 
 **Largest uncovered deals:**
 
-| id | name | amount | stage |
+| ID | Name | Amount | Stage |
 |---|---|---|---|
-| 334 | Cascade - Platform | 224523.14 | Negotiation |
-| 243 | Cobalt - Expansion | 213224.30 | Prospecting |
-| 124 | Havenport - Pilot | 198366.25 | Negotiation |
-| 135 | Lakeshore - Platform | 188244.06 | Negotiation |
-| 48 | Vantage - Expansion | 181861.34 | Negotiation |
+| 334 | Cascade - Platform | $224,523 | Negotiation |
+| 243 | Cobalt - Expansion | $213,224 | Prospecting |
+| 124 | Havenport - Pilot | $198,366 | Negotiation |
+| 135 | Lakeshore - Platform | $188,244 | Negotiation |
+| 48 | Vantage - Expansion | $181,861 | Negotiation |
 
 **What to do:** Two possibilities and they need different fixes. If reps *don't know* the tool exists, that's enablement. If they know and aren't using it, the output isn't worth the click — and that's a product problem. Ask five reps before you assume which.
 
 ### Model self-consistency
 
-🟡 **WARNING** — **8 runs scored a deal 7+ for risk and then listed ZERO red flags** (2.7% of successful runs).
+**[ WARNING ]** — **8 runs scored a deal 7+ for risk and then listed ZERO red flags** (2.7% of successful runs).
 
 The model asserted danger and produced no evidence for it. That is not an insight — it's a confident number with nothing behind it.
 
 **You cannot catch this by looking at either column alone.** A risk score of 9 looks fine. Zero red flags looks fine. Only the *combination* is broken.
 
-| deal_id | company | risk_score | red_flag_count | note_count |
+| Deal ID | Company | Risk Score | Red Flag Count | Note Count |
 |---|---|---|---|---|
 | 227 | Northwind Freight | 10 | 0 | 7 |
 | 44 | Kingsley Industries | 9 | 0 | 3 |
@@ -133,7 +135,7 @@ _The questions that decide things._
 
 ### Does the risk score predict anything?
 
-🟢 PASS — **Yes.** Low-risk deals win at **72.3%**. High-risk deals win at **33.3%**. A **39.0 point** spread.
+**[ PASS ]** — **Yes.** Low-risk deals win at **72.3%**. High-risk deals win at **33.3%**. A **39.0 point** spread.
 
 The score has real signal. Win rate falls monotonically as risk rises.
 
@@ -143,57 +145,86 @@ Score distribution is healthy — only **31%** of runs land in the middle band (
 
 **The caveat that matters:** this query cannot tell you whether a rep saw a high score and *saved* the deal. A perfect early-warning system that everyone acts on would show **no correlation at all**, because every flagged deal got rescued. The tool working and the tool failing look identical in this data.
 
-| risk_band | closed_deals | won | win_rate_pct |
+| Risk Band | Closed Deals | Won | Win Rate % |
 |---|---|---|---|
-| Low (1-3) | 47 | 34 | 72.30 |
-| Medium (4-6) | 65 | 32 | 49.20 |
-| High (7-10) | 78 | 26 | 33.30 |
+| Low (1-3) | 47 | 34 | 72.3% |
+| Medium (4-6) | 65 | 32 | 49.2% |
+| High (7-10) | 78 | 26 | 33.3% |
 
 **What to do:** Keep the feature. Cross-reference against rep activity — if flagged deals get *more* touches afterward, the tool is changing behavior and the real impact is larger than this table shows.
 
 ### Where deals stall
 
-🔵 INFO — **Prospecting** is the slowest stage — deals sit there an average of **31 days** (worst case: 70).
+**[ WARNING ]** — **Negotiation** is the slowest stage — deals sit there an average of **173 days** (worst case: 503).
 
 The CRM shows you a deal's stage *today* and overwrote yesterday. This is reconstructed from stage history, which is the only place the movie exists.
 
-**6 open deals have not moved in 45+ days.** Those are the calls to make this week.
+**Watch the trap in this number.** The usual way to compute stage velocity only measures deals that ENTERED a stage and LEFT it. Deals still sitting in a stage get dropped — and those are exactly the slow ones.
 
-| id | name | amount | stage | days_stuck | risk_score |
+For **Negotiation**, the naive calculation says **23 days**. Counting the 132 deals still stuck there, the real average is **173 days**.
+
+**The fast deals closed and got counted. The slow ones are still open and got ignored.** Averaging only the survivors makes your worst stage look like your best one. Every stage number here uses `COALESCE(exited_at, CURRENT_DATE)` so open deals still count.
+
+**49 open deals have gone quiet for 46-180 days** — listed in the next section. Those are the calls to make this week.
+
+**Separately: 79 open deals have not moved in over six months, worth $6,987,856.** Those are not stalled — they are **dead**, and they are inflating every forecast that sums open pipeline. **Close them lost.** A forecast built on zombie deals is worse than no forecast, because people believe it.
+
+| Stage | Deals Entered | Still Sitting | Avg Days | Worst Days |
+|---|---|---|---|---|
+| Negotiation | 182 | 132 | 173.30 | 503 |
+| Prospecting | 378 | 3 | 31.60 | 70 |
+| Discovery | 337 | 4 | 27.80 | 68 |
+| Demo | 305 | 8 | 27.10 | 74 |
+
+**What to do:** Ask why Negotiation takes 173 days. It's usually one of three things: waiting on a stakeholder who was never introduced, waiting on procurement nobody scoped, or the rep is avoiding a hard conversation. And purge the zombie deals before the next forecast.
+
+### Deals to call this week
+
+**[ WARNING ]** — **8 open deals** worth **$1,635,405** have gone quiet for 46-180 days. Old enough to be a problem, recent enough to save.
+
+These are the actionable ones — not the zombies above. Someone should touch every row in this table before Friday.
+
+**3 of them were never audited**, so there is no risk score to prioritize by. That's the coverage gap costing you, right here, in a specific list.
+
+| ID | Name | Amount | Stage | Days Stuck | Risk Score |
 |---|---|---|---|---|---|
-| 138 | Northwind - Renewal | 249071.69 | Negotiation | 429 | 2 |
-| 15 | Pinehurst - Suite | 244640.03 | Negotiation | 108 | 7 |
-| 330 | Ridgeway - Suite | 240235.05 | Negotiation | 409 | 7 |
-| 224 | Halcyon - Expansion | 224635.67 | Negotiation | 80 | 8 |
-| 334 | Cascade - Platform | 224523.14 | Negotiation | 63 | — |
-| 156 | Brightline - Expansion | 222112.84 | Negotiation | 238 | 4 |
+| 15 | Pinehurst - Suite | $244,640 | Negotiation | 109 | 7 |
+| 224 | Halcyon - Expansion | $224,636 | Negotiation | 81 | 8 |
+| 334 | Cascade - Platform | $224,523 | Negotiation | 64 | — |
+| 243 | Cobalt - Expansion | $213,224 | Negotiation | 89 | — |
+| 226 | Ridgeway - Core | $204,170 | Negotiation | 150 | 1 |
+| 48 | Vantage - Expansion | $181,861 | Negotiation | 147 | — |
+| 121 | Lakeshore - Expansion | $174,880 | Negotiation | 163 | 1 |
+| 296 | Thornbury - Pilot | $167,471 | Discovery | 48 | 8 |
 
-**What to do:** Ask why Prospecting takes 31 days. It's usually one of three things: waiting on a stakeholder who was never introduced, waiting on procurement nobody scoped, or the rep is avoiding a hard conversation.
+**What to do:** Assign each one an owner and a next step. If a deal can't get a next step, close it.
 
 ### Cost trend
 
-🔵 INFO — Average cost per run rose **+40%** — but **cost per note is -49.1%**, essentially flat. **The model didn't get more expensive. The inputs got bigger.**
+**[ INFO ]** — Average cost per run rose **+40%** — but **cost per note actually FELL 49%**. **The model didn't get more expensive. The inputs got bigger.**
 
 Reps logged more calls over the period (avg notes went from 3.3 to 8.3), so each audit had more text to read.
 
+**Per unit of work, the pipeline actually got CHEAPER.** Total spend is up because usage is up — which is the outcome you want. Reading only the headline number, you would conclude the opposite.
+
 **Same rising number, two completely different stories.** One is 'our vendor raised prices.' The other is 'the tool got more popular.' They demand opposite responses, and you cannot tell them apart without the control variable.
 
-Total spend to date: **$2.20**.
+**$0.0086 per audit.** Scaled up, that is **~$9 to audit 1,000 deals** — the cost is not the constraint here, and it will not become one. (294 runs logged to date.)
 
-| month | runs | avg_cost | avg_notes | cost_per_note |
+| Month | Runs | Avg Cost | Avg Notes | Cost Per Note |
 |---|---|---|---|---|
-| 2025-01-01 00:00:00 | 3 | 0.01 | 3.33 | 0.00 |
-| 2025-02-01 00:00:00 | 14 | 0.01 | 3.07 | 0.00 |
-| 2025-03-01 00:00:00 | 13 | 0.01 | 2.85 | 0.00 |
-| 2025-04-01 00:00:00 | 13 | 0.01 | 3.23 | 0.00 |
-| 2025-05-01 00:00:00 | 18 | 0.01 | 4.06 | 0.00 |
-| 2025-06-01 00:00:00 | 17 | 0.01 | 4.53 | 0.00 |
-| 2025-07-01 00:00:00 | 27 | 0.01 | 4.07 | 0.00 |
-| 2025-08-01 00:00:00 | 19 | 0.01 | 4.68 | 0.00 |
-| 2025-09-01 00:00:00 | 11 | 0.01 | 5.36 | 0.00 |
-| 2025-10-01 00:00:00 | 24 | 0.01 | 5.71 | 0.00 |
-| 2025-11-01 00:00:00 | 14 | 0.01 | 6.07 | 0.00 |
-| 2025-12-01 00:00:00 | 17 | 0.01 | 6.18 | 0.00 |
+| 2025-01-01 | 3 | $0.00611 | 3.33 | $0.00206 |
+| 2025-02-01 | 14 | $0.00609 | 3.07 | $0.0023 |
+| 2025-03-01 | 13 | $0.00571 | 2.85 | $0.00212 |
+| 2025-04-01 | 13 | $0.00585 | 3.23 | $0.00221 |
+| 2025-05-01 | 18 | $0.00651 | 4.06 | $0.00177 |
+| 2025-06-01 | 17 | $0.00677 | 4.53 | $0.0016 |
+| 2025-07-01 | 27 | $0.00644 | 4.07 | $0.00185 |
+| 2025-08-01 | 19 | $0.00697 | 4.68 | $0.00153 |
+| 2025-09-01 | 11 | $0.00722 | 5.36 | $0.00141 |
+| 2025-10-01 | 24 | $0.00728 | 5.71 | $0.00135 |
+| 2025-11-01 | 14 | $0.00734 | 6.07 | $0.00124 |
+| 2025-12-01 | 17 | $0.00738 | 6.18 | $0.00123 |
 
 _…and 6 more rows._
 
@@ -201,13 +232,13 @@ _…and 6 more rows._
 
 ### Unmatched leads
 
-🟡 **WARNING** — **217 unassigned leads could be matched to an existing company account today**, for free, just by matching the email domain.
+**[ WARNING ]** — **217 unassigned leads could be matched to an existing company account today**, for free, just by matching the email domain.
 
 Nobody has done it. These are people from companies already in the CRM, sitting unclaimed.
 
 The other buckets are the honest part: personal-email leads are *correctly* unmatchable. But the last bucket includes leads at companies that **are in the database** — the join fails anyway, because that company's `domain` field is empty. **You'd swear the company was missing. It isn't. The field is.**
 
-| category | leads |
+| Category | Leads |
 |---|---|
 | MATCHABLE NOW — money on the floor | 217 |
 | Personal email (correctly unmatchable) | 123 |
@@ -221,9 +252,8 @@ The other buckets are the honest part: personal-email leads are *correctly* unma
 
 Every finding above is a query, and every query is in `checks.sql` or `analysis.sql`.
 
-The interpretation is the point. A table of numbers is raw material — this report
-says what the numbers *mean* and what to do about them. A correct query nobody reads
-is worth zero.
+The interpretation is the point. A table of numbers is raw material — this report says what
+the numbers *mean* and what to do about them. **A correct query nobody reads is worth zero.**
 
-**Every AI feature I build ships with a query that could prove it useless.**
-The efficacy check above is that query.
+**Every AI feature I build ships with a query that could prove it useless.** The efficacy
+check above is that query.
